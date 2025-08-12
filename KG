@@ -1,0 +1,133 @@
+-- 🐾 Pet Changer KG - Auto Detect + Visual Flex Edition
+-- By ChatGPT
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+
+-- 🖥 GUI Setup (Compact)
+local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+ScreenGui.ResetOnSpawn = false
+
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 220, 0, 160)
+Frame.Position = UDim2.new(0.35, 0, 0.35, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Frame.BackgroundTransparency = 0.05
+Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = true
+Frame.ClipsDescendants = true
+
+-- Title
+local Title = Instance.new("TextLabel", Frame)
+Title.Size = UDim2.new(1, 0, 0, 25)
+Title.BackgroundTransparency = 1
+Title.Text = "🐾 Pet Changer"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
+
+-- KG Box
+local KgBox = Instance.new("TextBox", Frame)
+KgBox.Size = UDim2.new(1, -10, 0, 25)
+KgBox.Position = UDim2.new(0, 5, 0, 35)
+KgBox.PlaceholderText = "Enter KG..."
+KgBox.Text = ""
+KgBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+KgBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+KgBox.BorderSizePixel = 0
+KgBox.Font = Enum.Font.Gotham
+KgBox.TextSize = 14
+
+-- Apply Button
+local ApplyButton = Instance.new("TextButton", Frame)
+ApplyButton.Size = UDim2.new(1, -10, 0, 25)
+ApplyButton.Position = UDim2.new(0, 5, 0, 65)
+ApplyButton.Text = "Apply Size"
+ApplyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ApplyButton.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+ApplyButton.BorderSizePixel = 0
+ApplyButton.Font = Enum.Font.GothamBold
+ApplyButton.TextSize = 14
+
+-- Status Label
+local Status = Instance.new("TextLabel", Frame)
+Status.Size = UDim2.new(1, -10, 0, 20)
+Status.Position = UDim2.new(0, 5, 0, 95)
+Status.BackgroundTransparency = 1
+Status.Text = "Detected Pet: None"
+Status.TextColor3 = Color3.fromRGB(200, 200, 200)
+Status.Font = Enum.Font.Gotham
+Status.TextSize = 12
+Status.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Loading Bar
+local LoadingBarBG = Instance.new("Frame", Frame)
+LoadingBarBG.Size = UDim2.new(1, -10, 0, 5)
+LoadingBarBG.Position = UDim2.new(0, 5, 1, -10)
+LoadingBarBG.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+LoadingBarBG.BorderSizePixel = 0
+
+local LoadingBar = Instance.new("Frame", LoadingBarBG)
+LoadingBar.Size = UDim2.new(0, 0, 1, 0)
+LoadingBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+LoadingBar.BorderSizePixel = 0
+
+-- 🔍 Auto-Detect Pet Function
+local detectedPet = nil
+
+local function detectPet()
+    detectedPet = nil
+    for _, obj in ipairs(Workspace:GetChildren()) do
+        if obj:IsA("Model") and obj:FindFirstChild("HumanoidRootPart") and obj:FindFirstChildOfClass("Humanoid") == nil then
+            -- Skip players
+            if obj:FindFirstChildWhichIsA("BasePart") then
+                detectedPet = obj
+                break
+            end
+        end
+    end
+    if detectedPet then
+        Status.Text = "Detected Pet: " .. detectedPet.Name
+    else
+        Status.Text = "Detected Pet: None"
+    end
+end
+
+-- Apply Size
+ApplyButton.MouseButton1Click:Connect(function()
+    if not detectedPet or KgBox.Text == "" then
+        Status.Text = "⚠ No pet or KG entered!"
+        return
+    end
+
+    local sizeValue = tonumber(KgBox.Text)
+    if not sizeValue then
+        Status.Text = "⚠ Invalid KG value!"
+        return
+    end
+
+    -- Animate loading
+    LoadingBar.Size = UDim2.new(0, 0, 1, 0)
+    TweenService:Create(LoadingBar, TweenInfo.new(1), {Size = UDim2.new(1, 0, 1, 0)}):Play()
+    task.wait(1)
+
+    -- Resize pet visually
+    for _, part in ipairs(detectedPet:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Size = Vector3.new(sizeValue, sizeValue, sizeValue)
+        end
+    end
+
+    Status.Text = "✅ Pet resized to " .. sizeValue .. " KG (visual)"
+end)
+
+-- Keep detecting every 2 seconds
+task.spawn(function()
+    while true do
+        detectPet()
+        task.wait(2)
+    end
+end)
